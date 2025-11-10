@@ -10,35 +10,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-@Service
+@RestController
 @RequiredArgsConstructor
-public class ReviewWriteService {
+@RequestMapping("/api/v1/reviews")
+public class ReviewWriteController {
 
-    private final UserRepository userRepository;
-    private final RestaurantRepository restaurantRepository;
-    private final ReviewRepository reviewRepository;
+    private final ReviewWriteService reviewWriteService;
 
-    @Transactional
-    public Long writeReview(Long userId,
-                            Long restaurantId,
-                            String title,
-                            String content,
-                            int rate,
-                            LocalDateTime now) {
-
-        Member member = userRepository.lockById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("user not found: " + userId));
-
-        Restaurant restaurant = restaurantRepository.lockById(restaurantId)
-                .orElseThrow(() -> new IllegalArgumentException("restaurant not found: " + restaurantId));
-
-        Review review = Review.builder()
-                .member(member)
-                .restaurant(restaurant)
-                .title(title)
-                .content(content)
-                .build();
-
-        return reviewRepository.save(review).getId();
+    @PostMapping
+    public ApiResponse<Long> write(
+            @RequestParam Long userId,
+            @RequestParam Long restaurantId,
+            @RequestParam String title,
+            @RequestParam String content,
+            @RequestParam int rate
+    ) {
+        Long id = reviewWriteService.writeReview(
+                userId, restaurantId, title, content, rate, LocalDateTime.now()
+        );
+        return ApiResponse.onSuccess(GeneralSuccessCode.CREATED, id);
     }
 }
+
